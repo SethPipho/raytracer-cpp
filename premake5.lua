@@ -6,6 +6,9 @@ project "raytracer-cpp"
    language "C++"
    
    files { "**.h", "**.c", "**.cpp" }
-   includedirs { "lib/glm"}
+   includedirs {
+       "lib",
+       "lib/glm"
+    }
 
    optimize "Speed"
