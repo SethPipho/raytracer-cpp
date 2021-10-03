@@ -1,10 +1,11 @@
 #include <iostream>
 
-#include "glm/vec3.hpp"  
+#include "glm/glm.hpp"  
 #include "glm/gtx/string_cast.hpp"
 #include "ray.h"
 #include "camera.h"
 #include "geometry.h"
+#include "scene.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
@@ -16,22 +17,16 @@ int main(int argc, char** argv){
     int width = 512;
     int height = 512;
 
+    Scene scene;
     Camera camera(45, 1);
 
-    Mesh mesh;
-    
+    Mesh mesh = Mesh::loadObj("test/sphere.obj");
+    scene.addMesh(mesh);
 
-    mesh.vertices.push_back(glm::vec3(2,0,0));
-    mesh.vertices.push_back(glm::vec3(2,0,1));
-    mesh.vertices.push_back(glm::vec3(2,1,0));
-
-    mesh.face_indices.push_back(0);
-    mesh.face_indices.push_back(1);
-    mesh.face_indices.push_back(2);
-
-    Triangle triangle(&mesh, 0);
+    std::cout << scene.triangles.size() << std::endl;
 
     glm::vec3 *pixels = new glm::vec3[width * height];
+   
 
     for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++){
@@ -42,12 +37,14 @@ int main(int argc, char** argv){
 
             Ray camera_ray = camera.generateRay(u,v);
 
-            if (rayTriangleIntersection(camera_ray, triangle)){
-                pixels[index] = glm::vec3(1.f,1.f,1.f);
-            } else {
-                pixels[index] = glm::vec3(0.f,0.f,0.f);
+            pixels[index] = glm::vec3(0.f,0.f,0.f);
+            IntersectionData intersection = scene.nearestIntersection(camera_ray);
+            //std::cout << intersection.t << std::endl;
+            if (intersection.t < TMAX){
+                pixels[index] = (intersection.normal + 1.f)/2.f;
             }
 
+            
            
             
         }
