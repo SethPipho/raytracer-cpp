@@ -5,6 +5,7 @@
 #include "ray.h"
 #include "camera.h"
 #include "geometry.h"
+#include "mesh.h"
 #include "scene.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -19,6 +20,13 @@ int main(int argc, char** argv){
 
     Scene scene;
     Camera camera(45, 1);
+
+    BBox box1(glm::vec3(0.f,0.f,0.f), glm::vec3(1.f,1.f,1.f));
+    BBox box2(glm::vec3(1.f,1.f,1.f), glm::vec3(2.f,2.f,2.f));
+    BBox box3 = BBox::unionBBox(box1, box2);
+
+    std::cout << box2.max[0] <<std::endl;
+    std::cout << glm::to_string(box3.min) << " " << glm::to_string(box3.max) << std::endl;
 
     Mesh mesh = Mesh::loadObj("test/sphere.obj");
     scene.addMesh(mesh);

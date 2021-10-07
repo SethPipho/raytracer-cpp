@@ -6,89 +6,36 @@
 #include <vector>
 
 #include "glm/glm.hpp"
-#define TINYOBJLOADER_IMPLEMENTATION 
-#define TINYOBJLOADER_USE_FLOAT
-#include "tinyobjloader/tiny_obj_loader.h"
+
 
 
 #include "ray.h"
+#include "mesh.h"
 
 #define TMAX 1.0e+10
 #define TMIN 0.0000000000001
 
-class Mesh {
+class BBox {
     public:
-        std::vector<glm::vec3> vertices;
-        std::vector<glm::vec3> normals;
-        std::vector<int> face_indices;
-        std::vector<int> normal_indices;
-       
-        Mesh(){};
-        static Mesh loadObj(std::string filename);
+        glm::vec3 min, max;
+        BBox(){}
+        BBox(glm::vec3 min, glm::vec3 max){
+            this->min = min;
+            this->max = max;
+        }
+        glm::vec3 centroid();
+        static BBox unionBBox(const BBox& a, const BBox& n);
 };
 
-Mesh Mesh::loadObj(std::string filename){
-    Mesh mesh;
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string err;
+glm::vec3 BBox::centroid(){
+    return this->min + ((this->max - this->min)/2.0f);
+};
 
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename.c_str());
-
-    
-    //copy vertices into mesh
-    for (int i = 0; i < attrib.vertices.size(); i+=3){
-            float vx = attrib.vertices[i];
-            float vy = attrib.vertices[i + 1];
-            float vz = attrib.vertices[i + 2];
-            float nx = attrib.normals[i];
-            float ny = attrib.normals[i + 1];
-            float nz = attrib.normals[i + 2];
-            glm::vec3 vertex = glm::vec3(vx, vy, vz) + glm::vec3(3.f, 0.f, 0.f);
-            glm::vec3 normal = glm::vec3(nx, ny, nz);
-            mesh.vertices.push_back(vertex);
-            mesh.normals.push_back(normal);
-    }
-
-     // copy face indices
-    for (size_t s = 0; s < shapes.size(); s++) {
-        size_t index_offset = 0;
-        
-        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-            int fv = shapes[s].mesh.num_face_vertices[f];
-
-            // Loop over vertices in the face.
-            for (size_t v = 0; v < fv; v++) {
-                // access to vertex
-                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
-                tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
-                tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
-                tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
-                tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
-                tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
-                tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
-                tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
-
-              
-                mesh.face_indices.push_back(idx.vertex_index);
-                mesh.normal_indices.push_back(idx.normal_index);
-                // Optional: vertex colors
-                // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-                // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-                // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-            }
-            index_offset += fv;
-
-            // per-face material
-            shapes[s].mesh.material_ids[f];
-        }
-    }
-    return mesh;
-}
-
-
+BBox BBox::unionBBox(const BBox& a, const BBox& b){
+    glm::vec3 minb(std::min(a.min.x, b.min.x), std::min(a.min.y, b.min.y), std::min(a.min.z, b.min.z));
+    glm::vec3 maxb(std::max(a.max.x, b.max.x), std::max(a.max.y, b.max.y), std::max(a.max.z, b.max.z));
+    return BBox(minb, maxb);
+};
 
 class Triangle{
     public:
@@ -97,7 +44,20 @@ class Triangle{
         Triangle(){};
         Triangle(Mesh* mesh, int face_offset): mesh(mesh), face_offset(face_offset){};
         Triangle(const Triangle& t): mesh(t.mesh), face_offset(t.face_offset){};
+        glm::vec3 centroid();
 };
+
+glm::vec3 Triangle::centroid(){
+    glm::vec3 v0 = this->mesh->vertices[this->mesh->face_indices[this->face_offset]];
+    glm::vec3 v1 = this->mesh->vertices[this->mesh->face_indices[this->face_offset + 1]];
+    glm::vec3 v2 = this->mesh->vertices[this->mesh->face_indices[this->face_offset + 2]];
+
+    float x = (v0.x + v1.x + v2.x)/3.f;
+    float y = (v0.y + v1.y + v2.y)/3.f;
+    float z = (v0.z + v1.z + v2.z)/3.f;
+    return glm::vec3(x,y,z);
+};
+
 
 /*
 Class for holding data of ray-shape intersection 
@@ -112,6 +72,38 @@ class IntersectionData {
         IntersectionData(){t = TMAX;};
 };
 
+
+inline bool rayBBoxIntersection(const Ray& r, const BBox& box, double tmin, double tmax, double* t){
+
+    double t1 = (box.min.x - r.origin.x) / r.direction.x;
+    double t2 = (box.max.x - r.origin.x) / r.direction.x;
+    
+    if (t1 > t2) std::swap(t1, t2);
+    
+    double tymin = (box.min.y - r.origin.y) / r.direction.y;
+    double tymax = (box.max.y - r.origin.y) / r.direction.y;
+
+    if (tymin > tymax) std::swap(tymin, tymax);
+    if ((t1 > tymax) || (t2 < tymin)) return false;
+    if (tymin > t1) t1 = tymin;
+    if (tymax < t2) t2 = tymax;
+    double tzmin = (box.min.z - r.origin.z) / r.direction.z;
+    double tzmax = (box.max.z - r.origin.z) / r.direction.z;
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+    if ((t1 > tzmax) || (t2 < tzmin)) return false;
+    if (tzmin > t1) t1 = tzmin;
+    if (tzmax < t2) t2 = tzmax;
+    if (t1 > t2) std::swap(t1,t2);
+    if ((t1 > tmin) && (t1 < tmax)){
+        *t = t1;
+        return true;
+    }
+   if ((t2 > tmin) && (t2 < tmax)){
+        *t = t2;
+        return true;
+    }
+    return false;
+}
 
 //Möller–Trumbore intersection algorithm
 //https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
@@ -148,9 +140,9 @@ inline bool rayTriangleIntersection(Ray &ray,Triangle &triangle, float tmin, flo
  
     if (t > tmin && t < tmax){
 
-        glm::vec3 n0 = mesh->normals[mesh->normal_indices[face_offset]];
-        glm::vec3 n1 = mesh->normals[mesh->normal_indices[face_offset + 1]];
-        glm::vec3 n2 = mesh->normals[mesh->normal_indices[face_offset + 2]];
+        glm::vec3 n0 = mesh->normals[mesh->face_indices[face_offset]];
+        glm::vec3 n1 = mesh->normals[mesh->face_indices[face_offset + 1]];
+        glm::vec3 n2 = mesh->normals[mesh->face_indices[face_offset + 2]];
 
         glm::vec3 normal = glm::normalize((n1 * u) + (n2 * v) + (n0 * (1 - u -v)));
         intersection->t = t;
