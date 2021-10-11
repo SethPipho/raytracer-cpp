@@ -21,18 +21,6 @@ void Scene::addMesh(Mesh& mesh){
     } 
 };
 
-IntersectionData Scene::nearestIntersection(Ray& ray){
-    IntersectionData intersection;
-    IntersectionData nearest_intersection;
 
-    for (Triangle t: this->triangles){
-        if (rayTriangleIntersection(ray, t, 0, 100000, &intersection)){
-            if (intersection.t < nearest_intersection.t){
-                 nearest_intersection = intersection;
-            }
-        }
-    }
-    return nearest_intersection;
-}
 
 #endif

@@ -7,37 +7,53 @@
 #include "geometry.h"
 #include "mesh.h"
 #include "scene.h"
+#include "bvh.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
 int main(int argc, char** argv){
 
-    std::cout << "hello World" << std::endl;
+    //std::cout << "hello World" << std::endl;
 
-    int width = 512;
-    int height = 512;
+    int width = 512 * 2;
+    int height = 512 * 2;
 
     Scene scene;
-    Camera camera(45, 1);
+    Camera camera(30, 1);
+    BVH bvh;
 
     BBox box1(glm::vec3(0.f,0.f,0.f), glm::vec3(1.f,1.f,1.f));
     BBox box2(glm::vec3(1.f,1.f,1.f), glm::vec3(2.f,2.f,2.f));
     BBox box3 = BBox::unionBBox(box1, box2);
 
-    std::cout << box2.max[0] <<std::endl;
-    std::cout << glm::to_string(box3.min) << " " << glm::to_string(box3.max) << std::endl;
 
-    Mesh mesh = Mesh::loadObj("test/sphere.obj");
+    Mesh mesh = Mesh::loadObj("test/dragon.obj");
     scene.addMesh(mesh);
 
-    std::cout << scene.triangles.size() << std::endl;
+  
+
+    std::cout << "building bvh" << std::endl;
+      
+    for (int i = 0; i < mesh.face_indices.size(); i+=3){
+        Triangle t(&mesh, i);
+        bvh.triangles.push_back(t);
+    } 
+    bvh.build();
+   
+    
 
     glm::vec3 *pixels = new glm::vec3[width * height];
-   
 
+    std::cout << bvh.triangles.size() << std::endl;
+   
+    
+    std::cout << "rendering" <<std::endl;
     for (int y = 0; y < height; y++){
+        
         for (int x = 0; x < width; x++){
+
+            
 
             float u = (float)x / (float)width * 2 - 1;
             float v = -((float)y / (float)height * 2 - 1);
@@ -46,14 +62,18 @@ int main(int argc, char** argv){
             Ray camera_ray = camera.generateRay(u,v);
 
             pixels[index] = glm::vec3(0.f,0.f,0.f);
-            IntersectionData intersection = scene.nearestIntersection(camera_ray);
-            //std::cout << intersection.t << std::endl;
-            if (intersection.t < TMAX){
-                pixels[index] = (intersection.normal + 1.f)/2.f;
-            }
 
+          
             
-           
+            IntersectionData intersection = bvh.nearestIntersection(camera_ray);
+            
+            if (intersection.t < TMAX){
+                pixels[index] = (intersection.triangle.smooth_normal(intersection.bu, intersection.bv) + 1.f)/2.f;
+                
+                //pixels[index] = glm::vec3(1.f,1.f,1.f);
+            } 
+
+         
             
         }
     }
@@ -62,6 +82,7 @@ int main(int argc, char** argv){
 
       for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++){
+          
             int index = y * width + x;
             glm::vec3 pixel = pixels[index];
             
@@ -72,6 +93,7 @@ int main(int argc, char** argv){
         }
     }
 
+    std::cout << "saving" <<std::endl;
     stbi_write_png("test.png", width, height, 4, image_output_buffer, width * 4);
 
     delete[] pixels;

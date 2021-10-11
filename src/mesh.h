@@ -29,13 +29,12 @@ Mesh Mesh::loadObj(std::string filename){
 
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename.c_str());
 
-    
     //copy vertices into mesh
     for (int i = 0; i < attrib.vertices.size(); i+=3){
             float vx = attrib.vertices[i];
             float vy = attrib.vertices[i + 1];
             float vz = attrib.vertices[i + 2];
-            glm::vec3 vertex = glm::vec3(vx, vy, vz) + glm::vec3(3.f, 0.f, 0.f);
+            glm::vec3 vertex = glm::vec3(vx, vy, vz) + glm::vec3(20.f, 0.f, -5.f);
             mesh.vertices.push_back(vertex);
             mesh.normals.push_back(glm::vec3(0.f, 0.f, 0.f));
     }

@@ -4,6 +4,10 @@ workspace "raytracer-cpp"
 project "raytracer-cpp"
    kind "ConsoleApp"
    language "C++"
+
+   symbols 'On'
+   warnings "Extra"
+
    
    files { "**.h", "**.c", "**.cpp" }
    includedirs {
@@ -11,4 +15,5 @@ project "raytracer-cpp"
        "lib/glm"
     }
 
-   optimize "Speed"
+    optimize "Speed"
+
