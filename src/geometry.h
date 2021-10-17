@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include "glm/glm.hpp"
 #include "glm/gtx/string_cast.hpp"
@@ -17,7 +18,11 @@
 class BBox {
     public:
         glm::vec3 min, max;
-        BBox(){}
+        BBox(){
+            this->min = glm::vec3(std::numeric_limits<float>::infinity());
+            this->max = glm::vec3(-std::numeric_limits<float>::infinity());
+
+        }
         BBox(glm::vec3 min, glm::vec3 max){
             this->min = min;
             this->max = max;

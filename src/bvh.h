@@ -8,6 +8,8 @@
 #include "ray.h"
 #include "geometry.h"
 
+
+
 struct BVHNode {
     BBox bbox;
     int offset;
@@ -16,24 +18,48 @@ struct BVHNode {
     BVHNode* right;
 };
 
-struct BVHBin {
-    int n = 0;
-    BBox bbox;
-};
 
 class BVH {
+
+    struct BVHBin {
+        int n = 0;
+        BBox bbox;
+    };
+
+    struct Split {
+        BBox left_bbox;
+        BBox right_bbox;
+        int left_n = 0;
+        int right_n = 0;
+    };
+
     public:
         std::vector<Triangle> triangles;
         BVHNode* root;
-        int n_bins = 8;
+        int n_bins = 64;
         std::vector<BVHBin> bins[3];
+        std::vector<Split> splits[3];
 
         BVH(){
-            BVHBin bin;
             for (int i = 0; i < 3; i++){
-                this->bins[i] = std::vector<BVHBin>(this->n_bins, bin);
+                this->bins[i] = std::vector<BVHBin>(this->n_bins, BVHBin());
+                this->splits[i] = std::vector<Split>(this->n_bins - 1, Split());
             }
         }
+
+        ~BVH(){
+            this->free_nodes(this->root);
+        }
+
+        void free_nodes(BVHNode* parent){
+            if (parent->left == nullptr){
+                return;
+            }
+            this->free_nodes(parent->left);
+            this->free_nodes(parent->right);
+            delete parent;
+        }
+
         void build();
         void buildRecursive(BVHNode* parent);
         IntersectionData nearestIntersection(Ray& ray);
@@ -51,6 +77,9 @@ IntersectionData BVH::nearestIntersection(Ray& ray){
 void BVH::nearestIntersectionRecursive(Ray& ray, IntersectionData* nearest, BVHNode* node){
     float t;
     if (!(rayBBoxIntersection(ray, node->bbox, &t))) {
+        return;
+    }
+    if (t > nearest->t){
         return;
     }
 
@@ -86,16 +115,15 @@ void BVH::build(){
 
 void BVH::buildRecursive(BVHNode* parent){
 
-    if (parent->n < 4){
+    if (parent->n < 8){
         return;
     }
 
-    //reset bins
-    for (int j = 0; j < 3; j++){
-        for (int i = 0; i < this->n_bins; i++){
-             this->bins[j][i].n = 0;
-        }
+   for (int i = 0; i < 3; i++){
+        this->bins[i] = std::vector<BVHBin>(this->n_bins, BVHBin());
+        this->splits[i] = std::vector<Split>(this->n_bins - 1, Split());
     }
+
 
     glm::vec3 bbox_side_lengths = parent->bbox.max - parent->bbox.min;
 
@@ -104,54 +132,67 @@ void BVH::buildRecursive(BVHNode* parent){
         Triangle t = this->triangles[idx];
         glm::vec3 centroid = t.centroid();
         for (int axis = 0; axis < 3; axis++){
+            //TODO out of bounds error
             float i = (centroid[axis] - parent->bbox.min[axis])/bbox_side_lengths[axis];
-            int bin_num = (int)((float)this->n_bins * i);
+            i = std::max(0.f, std::min(i, .9999999f));
+            int bin_num = (int)(this->n_bins * i);
+            //assert (bin_num < this->n_bins);
+            //assert (bin_num >= 0);
             BVHBin& bin = this->bins[axis][bin_num];
-            if (bin.n == 0){
-                bin.bbox = t.bbox();
-            }
             bin.n += 1;
             bin.bbox = BBox::unionBBox(t.bbox(), bin.bbox);
         }
     }
 
+    //calculate splits
+    for (int axis = 0; axis < 3; axis++){
+
+        BBox left_bbox;
+        BBox right_bbox;
+        int left_n = 0;
+        int right_n = 0;
+
+        for (int i = 0; i < this->n_bins-1; i++){
+            BVHBin& bin = this->bins[axis][i];
+            Split& split = this->splits[axis][i];
+            left_bbox = BBox::unionBBox(left_bbox, bin.bbox);
+            left_n += bin.n;
+            split.left_bbox = left_bbox;
+            split.left_n = left_n;
+        }
+
+        for (int i = this->n_bins-2; i >= 0; i--){
+            BVHBin& bin = this->bins[axis][i];
+            Split& split = this->splits[axis][i];
+            right_bbox = BBox::unionBBox(right_bbox, bin.bbox);
+            right_n += bin.n;
+            split.right_bbox = right_bbox;
+            split.right_n = right_n;
+        }
+    }
+
+    //find min cost split
     float min_cost = std::numeric_limits<float>::infinity();
     int min_axis = 0;
-    int min_split = 0;
-    BBox min_left_bbox;
-    BBox min_right_bbox;
-
+    int min_split_idx;
+    Split min_split;
+  
     //compute costs for each split
     for (int axis = 0; axis < 3; axis++){
-        for (int split = 1; split < this->n_bins-1; split++){
+        for (int i = 0; i < this->n_bins - 1; i++){
 
-            BBox left_bbox;
-            BBox right_bbox;
-            int left_n = 0;
-            int right_n = 0;
-          
-            left_bbox = this->bins[axis][0].bbox;
-            right_bbox = this->bins[axis][this->n_bins - 1].bbox;
+            Split& split = this->splits[axis][i];
 
-            for(int i = 0; i < split; i++){
-                left_bbox = BBox::unionBBox(left_bbox, this->bins[axis][i].bbox);
-                left_n += this->bins[axis][i].n;
-            }
-            for(int i = split; i < this->n_bins; i++){
-                right_bbox = BBox::unionBBox(right_bbox, this->bins[axis][i].bbox);
-                right_n += this->bins[axis][i].n;
-            }
+            float p_right = split.right_bbox.surface_area()/parent->bbox.surface_area();
+            float p_left = split.left_bbox.surface_area()/parent->bbox.surface_area();
+            float cost = p_left * split.left_n + p_right * split.right_n;
 
-            float p_right = right_bbox.surface_area()/parent->bbox.surface_area();
-            float p_left = left_bbox.surface_area()/parent->bbox.surface_area();
-            float cost = p_left * left_n + p_right * right_n;
-
-            if (cost < min_cost && left_n > 0 && right_n > 0){
+           
+            if (cost < min_cost && split.left_n > 0 && split.right_n > 0 && cost > 0.f){
                 min_cost = cost;
                 min_axis = axis;
+                min_split_idx = i;
                 min_split = split;
-                min_left_bbox = left_bbox;
-                min_right_bbox = right_bbox;
             }
         }
     }
@@ -161,7 +202,7 @@ void BVH::buildRecursive(BVHNode* parent){
     }
 
     float bin_size = bbox_side_lengths[min_axis]/this->n_bins;
-    float partition_cord = parent->bbox.min[min_axis] + bin_size * min_split;
+    float partition_cord = parent->bbox.min[min_axis] + bin_size * min_split_idx;
 
     auto it = std::partition(this->triangles.begin() + parent->offset, 
                    this->triangles.begin() + parent->offset + parent->n,
@@ -184,17 +225,17 @@ void BVH::buildRecursive(BVHNode* parent){
 
     left->offset = parent->offset;
     left->n = partition_index - parent->offset;
-    left->bbox = min_left_bbox;
+    left->bbox = min_split.left_bbox;
 
     right->offset = partition_index;
     right->n = parent->n - left->n;
-    right->bbox = min_right_bbox;
+    right->bbox = min_split.right_bbox;
 
   
 
-   // if (left->n < 1 || right->n < 1){
-    //    return;
-   // }
+   if (left->n < 1 || right->n < 1){
+      return;
+    }
 
     parent->right = right;
     parent->left = left;

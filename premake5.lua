@@ -6,7 +6,7 @@ project "raytracer-cpp"
    language "C++"
 
    symbols 'On'
-   warnings "Extra"
+  
 
    
    files { "**.h", "**.c", "**.cpp" }
