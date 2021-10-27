@@ -13,7 +13,7 @@
 #include "mesh.h"
 
 #define TMAX 1.0e+10
-#define TMIN 0.0000000000001
+#define TMIN 0.001
 
 class BBox {
     public:
@@ -118,40 +118,54 @@ struct IntersectionData {
     //barycentric coordinates of hit, used to interpolating normals/uvs
     float bu;
     float bv;
+
+    int depth;
+
+    glm::vec3 face_normal;
 };
 
 
 
 inline bool rayBBoxIntersection(const Ray& r, const BBox& box, float* t){
 
-    float t1 = (box.min.x - r.origin.x) / r.direction.x;
-    float t2 = (box.max.x - r.origin.x) / r.direction.x;
-    
-    if (t1 > t2) std::swap(t1, t2);
-    
-    float tymin = (box.min.y - r.origin.y) / r.direction.y;
-    float tymax = (box.max.y - r.origin.y) / r.direction.y;
+    float ep = 1.f + std::numeric_limits<float>::epsilon();
 
-    if (tymin > tymax) std::swap(tymin, tymax);
-    if ((t1 > tymax) || (t2 < tymin)) return false;
-    if (tymin > t1) t1 = tymin;
-    if (tymax < t2) t2 = tymax;
-    float tzmin = (box.min.z - r.origin.z) / r.direction.z;
-    float tzmax = (box.max.z - r.origin.z) / r.direction.z;
-    if (tzmin > tzmax) std::swap(tzmin, tzmax);
-    if ((t1 > tzmax) || (t2 < tzmin)) return false;
-    if (tzmin > t1) t1 = tzmin;
-    if (tzmax < t2) t2 = tzmax;
-    if (t1 > t2) std::swap(t1,t2);
-    if ((t1 > TMIN) && (t1 < TMAX)){
-        *t = t1;
-        return true;
-    }
-   if ((t2 > TMIN) && (t2 < TMAX)){
-        *t = t2;
-        return true;
-    }
-    return false;
+    glm::vec3 inverse_direction = 1.0f / r.direction;
+
+    float tmin = (box.min.x - r.origin.x) * inverse_direction.x;
+    float tmax = (box.max.x - r.origin.x) * inverse_direction.x;
+
+
+    if (inverse_direction.x < 0.f) std::swap(tmin, tmax);
+
+    tmax *= 1.00000024f;
+
+    
+
+    float tymin = (box.min.y - r.origin.y)  * inverse_direction.y;
+    float tymax = (box.max.y - r.origin.y) * inverse_direction.y;
+
+    if (inverse_direction.y < 0.f) std::swap(tymin, tymax);
+
+    tymax *= 1.00000024f;
+
+    if ((tmin > tymax) || (tymin > tmax)) return false;
+    if (tymin > tmin) tmin = tymin;
+    if (tymax < tmax) tmax = tymax;
+    
+    float tzmin = (box.min.z - r.origin.z) * inverse_direction.z;
+    float tzmax = (box.max.z - r.origin.z) * inverse_direction.z;
+    if (inverse_direction.z < 0.f) std::swap(tzmin, tzmax);
+
+    tzmax *= 1.00000024f;
+
+    if ((tmin > tzmax) || (tzmin > tmax)) return false;
+    if (tzmin > tmin) tmin = tzmin;
+    if (tzmax < tmax) tmax = tzmax;
+ 
+    
+    *t = tmin;
+    return true;
 }
 
 //Möller–Trumbore intersection algorithm
@@ -174,18 +188,19 @@ inline IntersectionData rayTriangleIntersection(Ray &ray, Triangle &triangle){
     float det = glm::dot(v0v1, pvec); 
 
     // ray and triangle are parallel if det is close to 0
-    if (fabs(det) < 0.0000000001) return intersection; 
+    if (fabs(det) < 0.0) return intersection; 
 
     float invDet = 1 / det; 
     glm::vec3 tvec = ray.origin - v0; 
     float u = glm::dot(tvec, pvec) * invDet; 
-    if (u < 0 || u > 1) return intersection; 
+    if (u <= -0.000001f || u >= 1.000001f) return intersection; 
  
     glm::vec3 qvec = glm::cross(tvec, v0v1); 
     float v = glm::dot(ray.direction, qvec) * invDet; 
-    if (v < 0 || u + v > 1) return intersection; 
+    if (v <= -0.000001f || u + v >= 1.000001f) return intersection; 
  
     float t = dot(v0v2, qvec) * invDet; 
+    
  
     if (t <= TMIN || t >= TMAX){
         return intersection;
@@ -196,7 +211,8 @@ inline IntersectionData rayTriangleIntersection(Ray &ray, Triangle &triangle){
     intersection.triangle = triangle;
     intersection.bu = u;
     intersection.bv = v;
-    intersection.backface  = (glm::dot(ray.direction, face_normal) <= 0);
+    intersection.backface  = (glm::dot(ray.direction, face_normal) >= 0);
+    intersection.face_normal = face_normal;
     return intersection; 
 }
 

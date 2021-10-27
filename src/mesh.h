@@ -12,13 +12,26 @@
 
 class Mesh {
     public:
+        //temp until material class
+        glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 emission;
+        bool is_light = false;
+
         std::vector<glm::vec3> vertices;
         std::vector<glm::vec3> normals;
         std::vector<int> face_indices;
-
         Mesh(){};
+        void applyTransform(glm::mat4 transform);
         static Mesh loadObj(std::string filename);
 };
+
+void Mesh::applyTransform(glm::mat4 transform){
+    glm::mat4 transform_normal = glm::inverse(glm::transpose(transform));
+    for(int i = 0; i < vertices.size(); i++){
+        this->vertices[i] = transform * glm::vec4(this->vertices[i], 1.0);
+        this->normals[i] = transform_normal * glm::vec4(this->normals[i], 1.0);
+    }
+}
 
 Mesh Mesh::loadObj(std::string filename){
     Mesh mesh;
