@@ -10,7 +10,8 @@
 #include "json/json.hpp"
 using json = nlohmann::json;
 
-#include "ray.h"
+
+#include "geometry/ray.h"
 #include "util.h"
 
 /*

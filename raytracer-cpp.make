@@ -20,11 +20,11 @@ endif
 
 RESCOMP = windres
 DEFINES +=
-INCLUDES += -Ilib -Ilib/glm
+INCLUDES += -Ilib -Isrc
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O3 -g
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -O3 -g
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O3 -g -std=c++17
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -O3 -g -std=c++17
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
 LIBS +=
 LDDEPS +=
@@ -59,9 +59,7 @@ endif
 GENERATED :=
 OBJECTS :=
 
-GENERATED += $(OBJDIR)/glm.o
 GENERATED += $(OBJDIR)/main.o
-OBJECTS += $(OBJDIR)/glm.o
 OBJECTS += $(OBJDIR)/main.o
 
 # Rules
@@ -126,9 +124,6 @@ endif
 # File Rules
 # #############################################
 
-$(OBJDIR)/glm.o: lib/glm/glm/detail/glm.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"

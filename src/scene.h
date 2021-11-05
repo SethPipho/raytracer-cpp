@@ -9,7 +9,7 @@
 #include "glm/gtx/euler_angles.hpp"
 #include "json/json.hpp"
 
-#include "geometry.h"
+#include "geometry/geometry.h"
 #include "bvh.h"
 #include "camera.h"
 #include "util.h"
@@ -20,12 +20,14 @@ class Scene {
     public:
         std::vector<Mesh> meshes;
         std::vector<Triangle> triangles;
+        std::vector<Triangle> lights;
         BVH bvh;
         Camera camera;
         
         Scene(){};
         void build();
         void addMesh(Mesh& mesh);
+        Triangle& pickLight(float r);
         IntersectionData nearestIntersection(Ray& r);
         static Scene load_file(std::string filepath);
 };
@@ -40,10 +42,18 @@ void Scene::build(){
     bvh.build();
 }
 
+Triangle& Scene::pickLight(float r){
+    int index = r * this->lights.size();
+    return this->lights[index];
+}
+
 void Scene::addMesh(Mesh& mesh){
      for (int i = 0; i < mesh.face_indices.size(); i+=3){
         Triangle t(&mesh, i);
         this->triangles.push_back(t);
+        if (mesh.is_light){
+            this->lights.push_back(t);
+        }
     } 
 };
 
@@ -75,8 +85,16 @@ Scene Scene::load_file(std::string filepath){
         glm::mat4 scale_m = glm::scale(scale);
         glm::mat4 transform = translate_m * rotation_m * scale_m;
     
-        
         mesh.applyTransform(transform);
+
+        if (object.count("light") > 0){
+            mesh.is_light = object["light"].get<bool>();
+        } 
+        if (object.count("color") > 0){
+            
+            mesh.color = vector_to_vec3(object["color"].get<std::vector<float>>());
+            
+        } 
         scene.meshes.push_back(mesh);
     }
    

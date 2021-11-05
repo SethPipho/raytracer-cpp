@@ -1,7 +1,20 @@
-## 2021-10-22
-- start render 
+- organize souce files
+    - geometry folder, meterials folder
 
+- material implementation
+    - eval, sample, pdf
 
-## 2021-10-20
-- Json Scene File
-- Mesh Transforms
+- BVH
+    - store nodes in vector
+    - front to back traversal
+
+- Scenes
+    - fix mesh loading 
+    - assimp?
+
+- misc
+    - BBox::union
+    - Triangle.rayIntersection
+    - BBox.rayIntersection
+    - Triangle.getVertices
+

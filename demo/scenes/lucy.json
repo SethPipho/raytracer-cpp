@@ -8,6 +8,7 @@
         {
             "type":"mesh",
             "path":"plane.obj",
+            "light": true,
             "transform":{
                 "position":[0.0, 0.95, 2.5],
                 "rotation": [0.0,0.0,0.0],
@@ -16,11 +17,11 @@
         },
         {
             "type":"mesh",
-            "path":"dragon.obj",
+            "path":"lucy.obj",
             "transform":{
-                "position":[0.0, -1.0, 2.1],
+                "position":[0.0, -1.05, 2.25],
                 "rotation": [0.0,270.0,0.0],
-                "scale": [1.5,1.5,1.5]
+                "scale": [1.0,1.0,1.0]
             }
         },
         {
@@ -62,6 +63,7 @@
         {
             "type":"mesh",
             "path":"plane.obj",
+            "color": [0.012, 0.2, 0.553],
             "transform":{
                 "position":[1.0, 0.0, 1.5],
                 "rotation": [0.0,0.0,90.0],
@@ -71,6 +73,7 @@
         {
             "type":"mesh",
             "path":"plane.obj",
+            "color": [0.906, 0.2, 0.012],
             "transform":{
                 "position":[-1.0, 0.0, 1.5],
                 "rotation": [0.0,0.0,90.0],

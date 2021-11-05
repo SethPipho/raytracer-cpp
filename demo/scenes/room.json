@@ -1,0 +1,76 @@
+{
+    "camera": {
+        "fov": 30,
+        "position": [0.0, -0.55, 1.0],
+        "lookat": [0.0, -0.55, 10.0]
+    },
+    "objects": [
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "light": true,
+            "transform":{
+                "position":[0.0, 0.95, 1.5],
+                "rotation": [0.0,0.0,0.0],
+                "scale": [0.1, 0.1, 0.1]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "transform":{
+                "position":[0.0, -1, 1.5],
+                "rotation": [0.0,0.0,0.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "transform":{
+                "position":[0.0, 0.0, 2.5],
+                "rotation": [90.0,0.0,0.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "transform":{
+                "position":[0.0, 0.0, 0.5],
+                "rotation": [90.0,0.0,0.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "transform":{
+                "position":[0.0, 1.0, 2.5],
+                "rotation": [0.0,0.0,0.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "color": [0.012, 0.286, 0.553],
+            "transform":{
+                "position":[1.0, 0.0, 1.5],
+                "rotation": [0.0,0.0,90.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "path":"meshes/plane.obj",
+            "color": [0.906, 0.298, 0.012],
+            "transform":{
+                "position":[-1.0, 0.0, 1.5],
+                "rotation": [0.0,0.0,90.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        }
+       
+    ]
+}

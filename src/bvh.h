@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ray.h"
-#include "geometry.h"
+
+#include "geometry/geometry.h"
 
 
 
@@ -37,7 +37,7 @@ class BVH {
     public:
         std::vector<Triangle>* triangles = nullptr;
         BVHNode* root = nullptr;
-        int n_bins = 128;
+        int n_bins = 64;
         std::vector<Bin> bins[3];
         std::vector<Split> splits[3];
 
@@ -67,7 +67,32 @@ class BVH {
         void buildRecursive(BVHNode* parent);
         IntersectionData nearestIntersection(Ray& ray);
         void nearestIntersectionRecursive(Ray& ray, IntersectionData* nearest, BVHNode* node, int depth);
+        bool isOccluded(Ray& ray, float dist);
+        bool isOccludedRecursive(Ray& ray, float dist, BVHNode* node);
 };
+
+bool BVH::isOccluded(Ray& ray, float dist){
+    return this->isOccludedRecursive(ray, dist, this->root);
+}
+
+bool BVH::isOccludedRecursive(Ray& ray, float dist, BVHNode* node){
+    float t;
+    bool hit = rayBBoxIntersection(ray, node->bbox, &t);
+    if (!hit || t > dist){
+        return false;
+    }
+    if (node->right == nullptr){
+        for (int i = node->offset; i < node->offset + node->n; i++){
+            Triangle& tri = (*this->triangles).at(i);
+            IntersectionData intersection = rayTriangleIntersection(ray, tri);
+            if (intersection.hit && intersection.t < dist){
+                return true;
+            }
+        }
+        return false;
+    }
+    return this->isOccludedRecursive(ray, dist, node->left) || this->isOccludedRecursive(ray, dist, node->right);
+}
 
 IntersectionData BVH::nearestIntersection(Ray& ray){
     IntersectionData intersection;
@@ -117,7 +142,9 @@ void BVH::build(){
 
 void BVH::buildRecursive(BVHNode* parent){
 
-    
+    if (parent->n <= 4){
+        return;
+    }
 
    for (int i = 0; i < 3; i++){
         this->bins[i] = std::vector<Bin>(this->n_bins, Bin());
@@ -192,7 +219,7 @@ void BVH::buildRecursive(BVHNode* parent){
         }
     }
 
-    if (parent->n <= 4 + min_cost){
+    if (parent->n <= min_cost){
         return;
     }
 

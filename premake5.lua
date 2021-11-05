@@ -6,14 +6,13 @@ project "raytracer-cpp"
    language "C++"
 
    symbols 'On'
-  
 
-   
-   files { "**.h", "**.c", "**.cpp" }
+   files { "src/**.h", "src/**.c", "src/**.cpp" }
    includedirs {
        "lib",
-       "lib/glm"
+       "src"
     }
 
     optimize "Speed"
+    buildoptions { "-std=c++17" }
 
