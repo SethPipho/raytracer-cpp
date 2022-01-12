@@ -4,6 +4,7 @@ workspace "raytracer-cpp"
 project "raytracer-cpp"
    kind "ConsoleApp"
    language "C++"
+   cppdialect "C++17"
 
    symbols 'On'
 
@@ -14,5 +15,4 @@ project "raytracer-cpp"
     }
 
     optimize "Speed"
-    buildoptions { "-std=c++17" }
-
+  

@@ -1,85 +1,83 @@
 {
     "camera": {
-        "fov": 30,
-        "position": [0.0, -0.55, 1.0],
-        "lookat": [0.0, -0.55, 10.0]
+        "fov": 20,
+        "position": [0.0, 1.0, -3.7],
+        "lookat": [0.0, 1.0, 10.0]
     },
     "objects": [
         {
             "type":"mesh",
+            "name": "subject",
+            "path":"meshes/dragon.obj",
+            "transform":{
+                "position":[0.0, -0.04, 0.0],
+                "rotation": [0.0,270.0,0.0],
+                "scale": [1.5, 1.5, -1.5]
+            }
+        },
+        {
+            "type":"mesh",
+            "name": "light",
             "path":"meshes/plane.obj",
             "light": true,
             "transform":{
-                "position":[0.0, 0.95, 1.5],
+                "position":[0.0, 1.9999, 0],
                 "rotation": [0.0,0.0,0.0],
                 "scale": [0.5, 0.5, 0.5]
             }
         },
         {
             "type":"mesh",
-            "path":"meshes/dragon.obj",
-            "transform":{
-                "position":[0.0, -1.05, 2.1],
-                "rotation": [0.0,270.0,0.0],
-                "scale": [1.5,1.5,1.5]
-            }
-        },
-        {
-            "type":"mesh",
+            "name": "bottom",
             "path":"meshes/plane.obj",
             "transform":{
-                "position":[0.0, -1, 1.5],
+                "position":[0.0, 0, 0.0],
                 "rotation": [0.0,0.0,0.0],
                 "scale": [1.0,1.0,1.0]
             }
         },
         {
             "type":"mesh",
+            "name": "top",
             "path":"meshes/plane.obj",
             "transform":{
-                "position":[0.0, 0.0, 2.5],
-                "rotation": [90.0,0.0,0.0],
-                "scale": [1.0,1.0,1.0]
-            }
-        },
-        {
-            "type":"mesh",
-            "path":"meshes/plane.obj",
-            "transform":{
-                "position":[0.0, 0.0, 0.5],
-                "rotation": [90.0,0.0,0.0],
-                "scale": [1.0,1.0,1.0]
-            }
-        },
-        {
-            "type":"mesh",
-            "path":"meshes/plane.obj",
-            "transform":{
-                "position":[0.0, 1.0, 2.5],
+                "position":[0.0, 2.0, 0.0],
                 "rotation": [0.0,0.0,0.0],
                 "scale": [1.0,1.0,1.0]
             }
         },
         {
             "type":"mesh",
+            "name": "right",
             "path":"meshes/plane.obj",
-            "color": [0.012, 0.286, 0.553],
+            "color":[1.0, 0.4, 0.0],
             "transform":{
-                "position":[1.0, 0.0, 1.5],
+                "position":[-1.0, 1.0, 0.0],
                 "rotation": [0.0,0.0,90.0],
                 "scale": [1.0,1.0,1.0]
             }
         },
         {
             "type":"mesh",
+            "name": "left",
             "path":"meshes/plane.obj",
-            "color": [0.906, 0.298, 0.012],
+            "color":[0.0, 0.4, 1.0],
             "transform":{
-                "position":[-1.0, 0.0, 1.5],
+                "position":[1.0, 1.0, 0.0],
                 "rotation": [0.0,0.0,90.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "name": "back",
+            "path":"meshes/plane.obj",
+            "transform":{
+                "position":[0.0, 1.0, 1.0],
+                "rotation": [90.0,0.0,0.0],
                 "scale": [1.0,1.0,1.0]
             }
         }
-       
+        
     ]
 }

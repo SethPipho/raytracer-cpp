@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 
 #include "geometry/ray.h"
-#include "util.h"
+#include "util/math.h"
 
 /*
 Camera generates ray from given image clip space coordinates

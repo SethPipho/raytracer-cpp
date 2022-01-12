@@ -10,9 +10,10 @@
 #include "json/json.hpp"
 
 #include "geometry/geometry.h"
-#include "bvh.h"
-#include "camera.h"
-#include "util.h"
+#include "core/bvh.h"
+#include "core/camera.h"
+#include "util/math.h"
+#include "materials/bsdf.h"
 
 using json = nlohmann::json;
 
@@ -44,7 +45,7 @@ void Scene::build(){
 
 Triangle& Scene::pickLight(float r){
     int index = r * this->lights.size();
-    return this->lights[index];
+    return this->lights.at(index);
 }
 
 void Scene::addMesh(Mesh& mesh){
@@ -87,21 +88,18 @@ Scene Scene::load_file(std::string filepath){
     
         mesh.applyTransform(transform);
 
+        mesh.bsdf = new LambertianBSDF();
+
         if (object.count("light") > 0){
             mesh.is_light = object["light"].get<bool>();
         } 
         if (object.count("color") > 0){
-            
-            mesh.color = vector_to_vec3(object["color"].get<std::vector<float>>());
-            
-        } 
+            mesh.bsdf->albedo = vector_to_vec3(object["color"].get<std::vector<float>>());
+        } else {
+            mesh.bsdf->albedo = glm::vec3(1.0f);
+        }
         scene.meshes.push_back(mesh);
     }
-   
-
     return scene;
 }
-
-
-
 #endif

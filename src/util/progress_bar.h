@@ -1,5 +1,5 @@
-#ifndef MISC_H_
-#define MISC_H_
+#ifndef PBAR_H_
+#define PBAR_H_
 
 #include <cstdlib>
 #include <cmath>

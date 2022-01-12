@@ -41,9 +41,9 @@ glm::vec3 Triangle::centroid(){
 };
 
 glm::vec3 Triangle::sample_point(float r1, float r2){
-    glm::vec3 v0 = this->mesh->vertices[this->mesh->face_indices[this->face_offset]];
-    glm::vec3 v1 = this->mesh->vertices[this->mesh->face_indices[this->face_offset + 1]];
-    glm::vec3 v2 = this->mesh->vertices[this->mesh->face_indices[this->face_offset + 2]];
+    glm::vec3 v0 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset));
+    glm::vec3 v1 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset + 1));
+    glm::vec3 v2 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset + 2));
 
     if (r1 + r2 > 1.f) {
         r1 = 1.f - r1;

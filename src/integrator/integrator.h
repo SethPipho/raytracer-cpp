@@ -1,40 +1,32 @@
-#ifndef RENDERER_H_
-#define RENDERER_H_
+#ifndef INTEGRATOR_H_
+#define INTEGRATOR_H_
 
 #include <random>
 
 #include <glm/glm.hpp>
 #include "glm/gtx/string_cast.hpp"
 
-#include "scene.h"
-#include "bvh.h"
+#include "core/scene.h"
 #include "geometry/geometry.h"
+#include "util/math.h"
+#include "materials/bsdf.h"
 
-class Renderer {
+class Integrator {
     public:
-        virtual glm::vec3 trace(Ray& ray, Scene& scene, std::minstd_rand gen);
+        virtual glm::vec3 trace(Ray& ray, Scene& scene) = 0;
 
 };
 
+/*
 class BruteForcePathTracer: public Renderer {
     public:
-        //std::minstd_rand gen(std::random_device());
-        //std::uniform_real_distribution<float> dist(0.f, 1.f);
-
+       
         BruteForcePathTracer(){};
-        glm::vec3 trace(Ray& ray, Scene& scene, std::minstd_rand gen);
+        glm::vec3 trace(Ray& ray, Scene& scene);
 };
 
-glm::vec3 sampleSphereUniform(float r1, float r2){
-    float z = r1 * 2 - 1;
-    float t = r2 * 2 * 3.1415f;
-    float r = std::sqrt(1 - z * z);
-    float x = r * std::cos(t);
-    float y = r * std::sin(t);
-    return glm::vec3(x, y, z);
-}
 
-glm::vec3 BruteForcePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand gen){
+glm::vec3 BruteForcePathTracer::trace(Ray& ray, Scene& scene){
 
     std::uniform_real_distribution<float> dist(0, 1);
 
@@ -57,7 +49,7 @@ glm::vec3 BruteForcePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand g
             normal *= -1.f;
         }
 
-        glm::vec3 scatter_dir = sampleSphereUniform(dist(gen), dist(gen));
+        glm::vec3 scatter_dir = sampleSphereUniform(randuf(), randuf());
         if (glm::dot(scatter_dir, normal) < 0.f){
             scatter_dir *= -1.f;
         }
@@ -73,17 +65,18 @@ glm::vec3 BruteForcePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand g
     return radiance;
 }
 
+*/
 
-class NeePathTracer: public Renderer {
+class NeePathTracer: public Integrator {
     public:
         //std::minstd_rand gen(std::random_device());
         //std::uniform_real_distribution<float> dist(0.f, 1.f);
 
         NeePathTracer(){};
-        glm::vec3 trace(Ray& ray, Scene& scene, std::minstd_rand gen);
+        glm::vec3 trace(Ray& ray, Scene& scene);
 };
 
-glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand gen){
+glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
 
     std::uniform_real_distribution<float> dist(0, 1);
 
@@ -92,17 +85,21 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand gen){
     
     Ray scatter_ray = Ray(ray.origin, ray.direction);
 
+    bool specular_bounce = false;
+
     for (int i = 0; i < 3; i++){
         IntersectionData intersection = scene.bvh.nearestIntersection(scatter_ray);
-        if (intersection.t == TMAX){
+        if (!intersection.hit){
             break;  
         }
 
         if (intersection.triangle.mesh->is_light){
             if (i == 0){
                 return glm::vec3(15.f) * throughput;
-            }
-            break;    
+            } else if (specular_bounce){
+                radiance += throughput * glm::vec3(15.f);
+            } 
+            break;
         }
 
         bool backface = false;
@@ -111,10 +108,11 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand gen){
             normal *= -1.f;
             backface = true;
         }
+        
 
         //direct lighting
-        Triangle& light = scene.pickLight(dist(gen));
-        glm::vec3 light_point = light.sample_point(dist(gen), dist(gen));
+        Triangle& light = scene.pickLight(randuf());
+        glm::vec3 light_point = light.sample_point(randuf(), randuf());
         glm::vec3 light_normal = light.flat_normal();
         glm::vec3 to_light = light_point - intersection.position;
         float light_dist = glm::length(to_light);
@@ -126,41 +124,40 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene, std::minstd_rand gen){
 
         Ray shadow_ray = Ray(intersection.position, to_light);
 
-        bool occluded = (scene.bvh.isOccluded(shadow_ray, light_dist - .0001f));
+      
 
-        if (!occluded){
+
+        BSDF* bsdf = intersection.triangle.mesh->bsdf;
+
+        if (bsdf->sample_light){
+            bool occluded = (scene.bvh.isOccluded(shadow_ray, light_dist - .0001f));
+            specular_bounce = false;
+
+            if (!occluded){
+                float solid_angle = glm::dot(to_light, light_normal) / (light_dist * light_dist);
+                glm::vec3 bsdf_eval = bsdf->eval(-ray.direction, to_light, normal);
+
+                //weird hacks fix later
+                if (glm::dot(to_light, normal) < 0.0f) bsdf_eval *= -1.f;
+                if (solid_angle < 0.f) solid_angle *= -1.f;
             
-            
-            float solid_angle = glm::dot(to_light, light_normal) / (light_dist * light_dist);
-            glm::vec3 bsdf_eval = intersection.triangle.mesh->color/3.14f * glm::dot(normal, to_light);
 
+                float light_pdf = light_pos_pdf * light_pick_pdf;
+                glm::vec3 direct_lighting = glm::vec3(25.f) * bsdf_eval * solid_angle / light_pdf;
+                radiance += throughput * direct_lighting;
+            } 
 
-            if (glm::dot(to_light, normal) < 0.0f){
-                bsdf_eval *= -1.f;
-            }
-           
-            if (solid_angle < 0.f){
-                solid_angle *= -1.f;
-            }
-         
-    
-            float light_pdf = light_pos_pdf * light_pick_pdf;
-            glm::vec3 direct_lighting = glm::vec3(35.f) * bsdf_eval * solid_angle / light_pdf;
-            radiance += throughput * direct_lighting;
-        } 
-
-        //indirect lighting
-        glm::vec3 scatter_dir = sampleSphereUniform(dist(gen), dist(gen));
-        if (glm::dot(scatter_dir, normal) < 0.f){
-            scatter_dir *= -1.f;
+        } else {
+            specular_bounce = true;
         }
 
-        throughput *= intersection.triangle.mesh->color * glm::dot(normal, scatter_dir);
+      
 
-        scatter_ray = Ray(intersection.position, scatter_dir);
-
-        //std::cout << i << " " << glm::to_string(throughput) << std::endl; 
-    
+        //indirect lighting
+        BSDFSample sample = bsdf->sample(-ray.direction, normal);
+        
+        throughput *= sample.throughput / sample.pdf;
+        scatter_ray = Ray(intersection.position, sample.direction);
     }
 
     assert(radiance.x >= 0.f);

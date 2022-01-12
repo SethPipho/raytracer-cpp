@@ -37,7 +37,7 @@ class BVH {
     public:
         std::vector<Triangle>* triangles = nullptr;
         BVHNode* root = nullptr;
-        int n_bins = 64;
+        int n_bins = 128;
         std::vector<Bin> bins[3];
         std::vector<Split> splits[3];
 
@@ -228,7 +228,7 @@ void BVH::buildRecursive(BVHNode* parent){
 
     auto it = std::partition(this->triangles->begin() + parent->offset, 
                    this->triangles->begin() + parent->offset + parent->n,
-                   [min_axis, partition_cord](Triangle &t){return t.centroid()[min_axis] < partition_cord;});
+                   [min_axis, partition_cord](Triangle &t){return t.centroid()[min_axis] <= partition_cord;});
 
     int partition_index = (it - this->triangles->begin());
 
@@ -245,6 +245,8 @@ void BVH::buildRecursive(BVHNode* parent){
 
     parent->right = right;
     parent->left = left;
+
+    
 
     this->buildRecursive(left);
     this->buildRecursive(right);

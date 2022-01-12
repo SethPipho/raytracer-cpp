@@ -9,14 +9,16 @@
 #define TINYOBJLOADER_USE_FLOAT
 #include "tinyobjloader/tiny_obj_loader.h"
 
+#include "materials/bsdf.h"
+
 
 class Mesh {
     public:
         //temp until material class
-        glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-        glm::vec3 emission;
-        bool is_light = false;
 
+        BSDF* bsdf;
+        bool is_light = false;
+        
         std::vector<glm::vec3> vertices;
         std::vector<glm::vec3> normals;
         std::vector<int> face_indices;

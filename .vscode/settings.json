@@ -70,6 +70,14 @@
         "optional": "cpp",
         "ratio": "cpp",
         "valarray": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "any": "cpp",
+        "variant": "cpp",
+        "condition_variable": "cpp",
+        "deque": "cpp",
+        "mutex": "cpp",
+        "queue": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }

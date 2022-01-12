@@ -1,26 +1,25 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <vector>
+#include <thread>
+#include <chrono>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 #include "argparse/argparse.hpp"
 
-#include "glm/glm.hpp"  
-#include <glm/gtx/transform.hpp> 
-#include "glm/gtx/string_cast.hpp"
+#include "core/camera.h"
+#include "core/scene.h"
+#include "core/render.h"
+#include "integrator/integrator.h"
+#include "util/progress_bar.h"
 
-#include "geometry/geometry.h"
-#include "camera.h"
 
-#include "scene.h"
-#include "bvh.h"
-#include "render.h"
-#include "misc.h"
+
+
 
 int main(int argc, char** argv){
-
-    std::cout << "Hello World!" << std::endl;
 
     argparse::ArgumentParser cli("raytracer-cpp");
     cli.add_argument("-o","--output").default_value(std::string("output.png")).help("Output file");
@@ -28,6 +27,7 @@ int main(int argc, char** argv){
     cli.add_argument("-w","--width").default_value(512).help("Width of output image").scan<'i', int>();
     cli.add_argument("-h","--height").default_value(512).help("Height of output image").scan<'i', int>();
     cli.add_argument("--spp").default_value(64).help("Number of samples per pixel").scan<'i', int>();
+    cli.add_argument("--tile-size").default_value(16).help("Tile Size").scan<'i', int>();
 
     try {
         cli.parse_args(argc, argv);
@@ -38,68 +38,50 @@ int main(int argc, char** argv){
         std::exit(0);
     }
 
-    int width = cli.get<int>("--width");
-    int height = cli.get<int>("--height");
-    int spp = cli.get<int>("--spp");
-    std::string scene_file = cli.get<std::string>("--scene");
-    std::string output_file = cli.get<std::string>("--output");
+    RenderConfig config;
+    config.width = cli.get<int>("--width");
+    config.height = cli.get<int>("--height");
+    config.spp = cli.get<int>("--spp");
+    config.scene_file = cli.get<std::string>("--scene");
+    config.output_file = cli.get<std::string>("--output");
+    config.tile_size = cli.get<int>("--tile-size");
+    config.num_threads = std::thread::hardware_concurrency();
 
-    std::cout << scene_file << std::endl;
-    std::cout << width << "x" << height << " " << spp << "spp" << std::endl;
-    std::cout << output_file << std::endl;
-
-    
-    std::random_device rd;
-    std::minstd_rand gen(rd());
-    std::uniform_real_distribution<float> dist(0, 1);
-
-    Scene scene = Scene::load_file(scene_file);
-    scene.camera.aspect_ratio = float(width)/float(height);
+    std::cout << config.scene_file << std::endl;
+    std::cout << config.output_file << std::endl;
+    std::cout << config.width << "x" << config.height << " " << config.spp << "spp" << std::endl;
+    std::cout << config.tile_size << "x" <<  config.tile_size << " tiles" << std::endl;
+    std::cout << config.num_threads << " threads available" << std::endl;
+  
+   
+    Scene scene = Scene::load_file(config.scene_file);
+    scene.camera.aspect_ratio = float(config.width)/float(config.height);
     scene.build();
 
     std::cout <<"# Tris: "<< scene.triangles.size() << std::endl;
     
-    NeePathTracer renderer;
-    glm::vec3 *accumulator = new glm::vec3[width * height];
+    NeePathTracer integrator;
+    glm::vec3 *accumulator = new glm::vec3[config.width * config.height];
    
     ProgressBar progress_bar;
     progress_bar.begin();
 
     std::cout << "rendering" <<std::endl;
-    for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
 
-            float u =  (float) x / (float) width  * 2 - 1;
-            float v = -((float) y / (float) height * 2 - 1);
-            int index = y * width + x;
-            accumulator[index] = glm::vec3(0.f,0.f,0.f);
+    render_tiled(integrator, scene, config, accumulator);
 
-            for (int s = 0; s < spp; s++){
-                float aa_x = dist(gen) / (float) width;
-                float aa_y = dist(gen) / (float) height;
-
-                Ray camera_ray = scene.camera.generateRay(u + aa_x,v + aa_y); 
-                accumulator[index] += glm::clamp(renderer.trace(camera_ray, scene, gen), 0.f, 20.f);
-            }
-            
-        }
-        if (y % 32 == 0){
-           progress_bar.update(double(y)/ double(height));
-           progress_bar.display();
-        }        
-    }
-
+ 
     progress_bar.update(1.0);
     progress_bar.display();
 
 
-    unsigned char* image_output_buffer = new unsigned char[width * height * 4];
+    unsigned char* image_output_buffer = new unsigned char[config.width * config.height * 4];
 
-      for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
+      for (int y = 0; y < config.height; y++){
+        for (int x = 0; x < config.width; x++){
           
-            int index = y * width + x;
-            glm::vec3 pixel = accumulator[index] / (float) spp;
+            int index = y * config.width + x;
+            glm::vec3 pixel = accumulator[index] / (float) config.spp;
             pixel = pixel / (pixel + glm::vec3(1.f));
             pixel = glm::clamp(pixel, 0.f, 1.f);
             pixel = glm::pow(pixel, glm::vec3(1/2.2f));
@@ -112,7 +94,7 @@ int main(int argc, char** argv){
     }
 
     std::cout << "saving" <<std::endl;
-    stbi_write_png(output_file.c_str(), width, height, 4, image_output_buffer, width * 4);
+    stbi_write_png(config.output_file.c_str(), config.width, config.height, 4, image_output_buffer, config.width * 4);
 
     delete[] accumulator;
     delete[] image_output_buffer;
