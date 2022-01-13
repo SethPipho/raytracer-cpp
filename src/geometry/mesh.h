@@ -2,6 +2,7 @@
 #define MESH_H_
 
 #include <vector>
+#include <map>
 
 #include "glm/glm.hpp"
 
@@ -44,18 +45,17 @@ Mesh Mesh::loadObj(std::string filename){
 
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename.c_str());
 
-    
+    //operator overload for std::map
+    auto compare_idx = [](const tinyobj::index_t& a, const tinyobj::index_t& b) {
+        return a.vertex_index < b.vertex_index ||
+            (a.vertex_index == b.vertex_index && a.normal_index < b.normal_index) ||
+            (a.vertex_index == b.vertex_index && a.normal_index == b.normal_index && a.texcoord_index < b.texcoord_index);
+    };
 
-    //copy vertices into mesh
-    for (int i = 0; i < attrib.vertices.size(); i+=3){
-            float vx = attrib.vertices[i];
-            float vy = attrib.vertices[i + 1];
-            float vz = attrib.vertices[i + 2];
-            glm::vec3 vertex = glm::vec3(vx, vy, vz);
-            mesh.vertices.push_back(vertex);
-            mesh.normals.push_back(glm::vec3(0.f, 0.f, 0.f));
-    }
+     std::map<tinyobj::index_t, int,decltype(compare_idx)> unique_vertices(compare_idx);
 
+
+    int current_idx;
      // copy face indices
     for (size_t s = 0; s < shapes.size(); s++) {
         size_t index_offset = 0;
@@ -67,22 +67,29 @@ Mesh Mesh::loadObj(std::string filename){
             for (size_t v = 0; v < fv; v++) {
                 // access to vertex
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
-                tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
-                tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
-                tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
-                tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
-                tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
-                tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
-                tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
 
-              
-                mesh.face_indices.push_back(idx.vertex_index);
-                mesh.normals[idx.vertex_index] = glm::vec3(nx, ny, nz);
-                // Optional: vertex colors
-                // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-                // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-                // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
+                auto it = unique_vertices.find(idx);
+
+                if (it != unique_vertices.end()) {
+                    mesh.face_indices.push_back(it->second);
+                } else {
+                  
+                    tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
+                    tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
+                    tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
+                    tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
+                    tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
+                    tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
+                    tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
+                    tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
+
+                    mesh.face_indices.push_back(current_idx);
+                    mesh.vertices.push_back(glm::vec3(vx, vy, vz));
+                    mesh.normals.push_back(glm::vec3(nx, ny, nz));
+
+                    unique_vertices.insert(std::pair<tinyobj::index_t, int>(idx, current_idx));
+                    current_idx += 1;
+                }
             }
             index_offset += fv;
 
