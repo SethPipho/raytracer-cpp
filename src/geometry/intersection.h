@@ -30,6 +30,8 @@ struct IntersectionData {
     int depth;
 
     glm::vec3 face_normal;
+    glm::vec3 smooth_normal;
+    glm::vec2 tex_coord;
 };
 
 inline bool rayBBoxIntersection(const Ray& r, const BBox& box, float* t){

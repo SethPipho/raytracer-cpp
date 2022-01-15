@@ -10,7 +10,7 @@
 #define TINYOBJLOADER_USE_FLOAT
 #include "tinyobjloader/tiny_obj_loader.h"
 
-#include "materials/bsdf.h"
+class BSDF;
 
 
 class Mesh {
@@ -22,6 +22,7 @@ class Mesh {
         
         std::vector<glm::vec3> vertices;
         std::vector<glm::vec3> normals;
+        std::vector<glm::vec2> tex_coords;
         std::vector<int> face_indices;
         Mesh(){};
         void applyTransform(glm::mat4 transform);
@@ -55,7 +56,7 @@ Mesh Mesh::loadObj(std::string filename){
      std::map<tinyobj::index_t, int,decltype(compare_idx)> unique_vertices(compare_idx);
 
 
-    int current_idx;
+    int current_idx = 0;
      // copy face indices
     for (size_t s = 0; s < shapes.size(); s++) {
         size_t index_offset = 0;
@@ -86,6 +87,7 @@ Mesh Mesh::loadObj(std::string filename){
                     mesh.face_indices.push_back(current_idx);
                     mesh.vertices.push_back(glm::vec3(vx, vy, vz));
                     mesh.normals.push_back(glm::vec3(nx, ny, nz));
+                    mesh.tex_coords.push_back(glm::vec2(tx, ty));
 
                     unique_vertices.insert(std::pair<tinyobj::index_t, int>(idx, current_idx));
                     current_idx += 1;

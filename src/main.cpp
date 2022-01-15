@@ -17,8 +17,6 @@
 
 
 
-
-
 int main(int argc, char** argv){
 
     argparse::ArgumentParser cli("raytracer-cpp");
@@ -56,6 +54,12 @@ int main(int argc, char** argv){
    
     Scene scene = Scene::load_file(config.scene_file);
     scene.camera.aspect_ratio = float(config.width)/float(config.height);
+
+    LambertianBSDF* bsdf = dynamic_cast<LambertianBSDF*>(scene.meshes[0].bsdf);
+    bsdf->use_texture = true;
+    bsdf->albedo_texture = TextureMap::load_file("demo/scenes/textures/apple_albedo.png");
+  
+    
     scene.build();
 
     std::cout <<"# Tris: "<< scene.triangles.size() << std::endl;
@@ -74,7 +78,7 @@ int main(int argc, char** argv){
     progress_bar.update(1.0);
     progress_bar.display();
 
-
+    
     unsigned char* image_output_buffer = new unsigned char[config.width * config.height * 4];
 
       for (int y = 0; y < config.height; y++){
@@ -92,7 +96,7 @@ int main(int argc, char** argv){
             image_output_buffer[index * 4 + 3] = (unsigned char) (255);
         }
     }
-
+    
     std::cout << "saving" <<std::endl;
     stbi_write_png(config.output_file.c_str(), config.width, config.height, 4, image_output_buffer, config.width * 4);
 

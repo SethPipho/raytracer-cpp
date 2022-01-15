@@ -103,12 +103,18 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
         }
 
         bool backface = false;
+        
         glm::vec3 normal = intersection.triangle.smooth_normal(intersection.barycentric);
+        glm::vec2 tex_coord = intersection.triangle.tex_coords(intersection.barycentric);
+
+        
         if (glm::dot(ray.direction, normal) >= 0.0f){
             normal *= -1.f;
             backface = true;
         }
         
+        intersection.smooth_normal = normal;
+        intersection.tex_coord = tex_coord;
 
         //direct lighting
         Triangle& light = scene.pickLight(randuf());
@@ -135,7 +141,7 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
 
             if (!occluded){
                 float solid_angle = glm::dot(to_light, light_normal) / (light_dist * light_dist);
-                glm::vec3 bsdf_eval = bsdf->eval(-ray.direction, to_light, normal);
+                glm::vec3 bsdf_eval = bsdf->eval(-ray.direction, to_light, intersection);
 
                 //weird hacks fix later
                 if (glm::dot(to_light, normal) < 0.0f) bsdf_eval *= -1.f;
@@ -154,7 +160,7 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
       
 
         //indirect lighting
-        BSDFSample sample = bsdf->sample(-ray.direction, normal);
+        BSDFSample sample = bsdf->sample(-ray.direction, intersection);
         
         throughput *= sample.throughput / sample.pdf;
         scatter_ray = Ray(intersection.position, sample.direction);

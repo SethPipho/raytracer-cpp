@@ -24,6 +24,7 @@ class Triangle{
         glm::vec3 centroid();
         glm::vec3 flat_normal();
         glm::vec3 smooth_normal(glm::vec2 barycentric);
+        glm::vec2 tex_coords(glm::vec2 barycentric);
         glm::vec3 sample_point(float r1, float r2);    
         float area();
         BBox bbox();
@@ -84,6 +85,17 @@ glm::vec3 Triangle::flat_normal(){
     glm::vec3 e1 = v2 - v0;
     glm::vec3 n = glm::cross(e0, e1);
     return glm::normalize(n);
+}
+
+glm::vec2 Triangle::tex_coords(glm::vec2 barycentric){
+    float u = barycentric.x;
+    float v = barycentric.y;
+
+    glm::vec2 t0 = this->mesh->tex_coords[this->mesh->face_indices[this->face_offset]];
+    glm::vec2 t1 = this->mesh->tex_coords[this->mesh->face_indices[this->face_offset + 1]];
+    glm::vec2 t2 = this->mesh->tex_coords[this->mesh->face_indices[this->face_offset + 2]];
+
+    return t1 * u + t2 * v + t0 * (1 - u - v);
 }
 
 
