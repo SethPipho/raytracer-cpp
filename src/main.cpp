@@ -55,9 +55,7 @@ int main(int argc, char** argv){
     Scene scene = Scene::load_file(config.scene_file);
     scene.camera.aspect_ratio = float(config.width)/float(config.height);
 
-    LambertianBSDF* bsdf = dynamic_cast<LambertianBSDF*>(scene.meshes[0].bsdf);
-    bsdf->use_texture = true;
-    bsdf->albedo_texture = TextureMap::load_file("demo/scenes/textures/apple_albedo.png");
+   
   
     
     scene.build();

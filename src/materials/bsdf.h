@@ -7,8 +7,6 @@
 #include "util/math.h"
 #include "materials/texture.h"
 
-
-
 struct BSDFSample {
     glm::vec3 direction;
     glm::vec3 throughput;
@@ -40,7 +38,7 @@ class LambertianBSDF : public BSDF {
         float pdf(const glm::vec3& wo, const glm::vec3& wi, const IntersectionData& intersection) final;
 };
 
-BSDFSample LambertianBSDF::sample(const glm::vec3& wo, const IntersectionData& intersection) {
+inline BSDFSample LambertianBSDF::sample(const glm::vec3& wo, const IntersectionData& intersection) {
     BSDFSample sample;
     glm::vec3 direction = sampleSphereUniform(randuf(), randuf());
     if (glm::dot(direction, intersection.smooth_normal) < 0.0f) {
@@ -52,7 +50,7 @@ BSDFSample LambertianBSDF::sample(const glm::vec3& wo, const IntersectionData& i
     return sample;
 }
 
-glm::vec3 LambertianBSDF::eval(const glm::vec3& wo, const glm::vec3& wi, const IntersectionData& intersection) {
+inline glm::vec3 LambertianBSDF::eval(const glm::vec3& wo, const glm::vec3& wi, const IntersectionData& intersection) {
     glm::vec3 albedo;
     if (use_texture) {
         albedo = albedo_texture->sample(intersection.tex_coord);
@@ -64,7 +62,7 @@ glm::vec3 LambertianBSDF::eval(const glm::vec3& wo, const glm::vec3& wi, const I
     return albedo / PI * glm::dot( intersection.smooth_normal, wi);
 }
 
-float LambertianBSDF::pdf(const glm::vec3& wo, const glm::vec3& wi, const IntersectionData& intersection) {
+inline float LambertianBSDF::pdf(const glm::vec3& wo, const glm::vec3& wi, const IntersectionData& intersection) {
     return 1.0f / PI;
 }
 

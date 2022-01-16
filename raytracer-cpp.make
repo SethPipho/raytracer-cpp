@@ -59,8 +59,22 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/bbox.o
+GENERATED += $(OBJDIR)/bvh.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/mesh.o
+GENERATED += $(OBJDIR)/nee.o
+GENERATED += $(OBJDIR)/scene.o
+GENERATED += $(OBJDIR)/textures.o
+GENERATED += $(OBJDIR)/triangle.o
+OBJECTS += $(OBJDIR)/bbox.o
+OBJECTS += $(OBJDIR)/bvh.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/mesh.o
+OBJECTS += $(OBJDIR)/nee.o
+OBJECTS += $(OBJDIR)/scene.o
+OBJECTS += $(OBJDIR)/textures.o
+OBJECTS += $(OBJDIR)/triangle.o
 
 # Rules
 # #############################################
@@ -124,7 +138,28 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/bvh.o: src/core/bvh.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/scene.o: src/core/scene.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/bbox.o: src/geometry/bbox.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/mesh.o: src/geometry/mesh.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/triangle.o: src/geometry/triangle.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/nee.o: src/integrator/nee.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/textures.o: src/materials/textures.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

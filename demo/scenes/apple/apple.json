@@ -1,0 +1,54 @@
+{
+    "camera": {
+        "fov": 20,
+        "position": [0.0, 1.0, -3.7],
+        "lookat": [0.0, 1.0, 10.0]
+    },
+    "materials":[
+        {
+            "name": "apple_mat",
+            "type": "lambertian",
+            "albedo_texture": "textures/apple_albedo.png"
+        },
+        {
+            "name": "room_mat",
+            "type": "lambertian",
+            "albedo_texture": "textures/room_albedo.png"
+        }
+    ],
+    "objects": [
+        {
+            "type":"mesh",
+            "name": "light",
+            "path":"meshes/plane.obj",
+            "light": true,
+            "transform":{
+                "position":[0.0, 1.9999, 0.0],
+                "rotation": [0.0,0.0,0.0],
+                "scale": [0.5, 0.5, 0.5]
+            }
+        },
+        {
+            "type":"mesh",
+            "name": "room",
+            "material_ref": "room_mat",
+            "path":"meshes/room.obj",
+            "transform":{
+                "position":[0.0, 0, 0.0],
+                "rotation": [0.0,180.0,0.0],
+                "scale": [1.0,1.0,1.0]
+            }
+        },
+        {
+            "type":"mesh",
+            "name": "apple",
+            "material_ref": "apple_mat",
+            "path":"meshes/apple.obj",
+            "transform":{
+                "position":[0.0, 0, 0.0],
+                "rotation": [0.0,180.0,0.0],
+                "scale": [7.0,7.0,7.0]
+            }
+        }
+    ]
+}

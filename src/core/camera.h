@@ -40,7 +40,7 @@ class Camera {
         static Camera from_json(json config);
 };
 
-Camera::Camera(float fov, float aspect_ratio, glm::mat4 transform){
+inline Camera::Camera(float fov, float aspect_ratio, glm::mat4 transform){
     this->fov = fov;
     this->aspect_ratio = aspect_ratio;
     this->h = std::tan(fov/180 * 3.1415);
@@ -48,13 +48,13 @@ Camera::Camera(float fov, float aspect_ratio, glm::mat4 transform){
     this->position = this->transform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-Ray Camera::generateRay(float u, float v){
+inline Ray Camera::generateRay(float u, float v){
     glm::vec3 dir = this->transform * glm::vec4(u * this->h * this->aspect_ratio, v * h, -1.f, 0);
     dir = glm::normalize(dir);
     return Ray(this->position, dir);
 }
 
-Camera Camera::from_json(json config){
+inline Camera Camera::from_json(json config){
     float fov = config["fov"];
     glm::vec3 pos = vector_to_vec3(config["position"]);
     glm::vec3 lookat = vector_to_vec3(config["lookat"]);
