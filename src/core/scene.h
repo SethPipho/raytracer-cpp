@@ -32,4 +32,10 @@ class Scene {
         IntersectionData nearestIntersection(Ray& r);
         static Scene load_file(std::string filepath);
 };
+
+
+
+
+
+
 #endif

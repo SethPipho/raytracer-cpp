@@ -1,12 +1,16 @@
 #include <unordered_map>
 #include <string>
 
+#define TINYGLTF_NO_INCLUDE_STB_IMAGE_WRITE 
+#define TINYGLTF_NO_INCLUDE_STB_IMAGE
+#define TINYGLTF_NO_INCLUDE_JSON 
+#include "tinygltf/tiny_gltf.h"
+#include "json/json_fwd.hpp"
+
 #include "core/scene.h"
-
-#include "json/json.hpp"
-
 #include "materials/bsdf.h"
 #include "materials/texture.h"
+#include "assets/gtlf_loader.h"
 
 void Scene::build(){
     std::cout << "building scene" << std::endl;
@@ -34,6 +38,7 @@ void Scene::addMesh(Mesh& mesh){
 };
 
 
+
 Scene Scene::load_file(std::string filepath){
     std::cout << "loading scene" << std::endl;
 
@@ -59,40 +64,52 @@ Scene Scene::load_file(std::string filepath){
         if (mat_config.contains("albedo_texture")){
              std::string tex_path = dir + "/" + (std::string)mat_config["albedo_texture"];
              material->albedo_texture = TextureMap::load_file(tex_path);
-             material->use_texture = true;
         }
         material_map[name] = material;
     }
 
     for (auto object: config["objects"]){
         std::string mesh_path = dir + "/" + (std::string) object["path"];
-        Mesh mesh = Mesh::loadObj(mesh_path);
-
+        
         glm::vec3 position = vector_to_vec3(object["transform"]["position"]);
         glm::vec3 rotation = vector_to_vec3(object["transform"]["rotation"]);
-        glm::vec3 scale =  vector_to_vec3(object["transform"]["scale"]);
+        float scale =  object["transform"]["scale"].get<float>();
 
         glm::mat4 translate_m = glm::translate(position);
         glm::mat4 rotation_m = glm::eulerAngleYXZ(glm::radians(rotation[1]), glm::radians(rotation[0]), glm::radians(rotation[2]));
-        glm::mat4 scale_m = glm::scale(scale);
+        glm::mat4 scale_m = glm::scale(glm::vec3(scale));
         glm::mat4 transform = translate_m * rotation_m * scale_m;
     
-        mesh.applyTransform(transform);
 
-        if (object.contains("material_ref")){
-            std::string material_name = object["material_ref"];
-            mesh.bsdf = material_map[material_name];
+    
+        if (object["type"] == "gltf"){
+            auto meshes = load_gltf(mesh_path);
+            for (auto mesh: meshes){
+                mesh.applyTransform(transform);
+                scene.meshes.push_back(mesh);
+            }
         } else {
+
+            Mesh mesh = Mesh::loadObj(mesh_path);
+            mesh.applyTransform(transform);
+
+            //default material
             mesh.bsdf = new LambertianBSDF();
             mesh.bsdf->albedo = glm::vec3(1.0f);
-        }
 
-     
-        if (object.count("light") > 0){
-            mesh.is_light = object["light"].get<bool>();
-        } 
-      
-        scene.meshes.push_back(mesh);
+            if (object.contains("material_ref")){
+                std::string material_name = object["material_ref"];
+                mesh.bsdf = material_map[material_name];
+            }
+        
+            if (object.count("light") > 0){
+                mesh.is_light = object["light"].get<bool>();
+            } 
+        
+            scene.meshes.push_back(mesh);
+        }
     }
     return scene;
 }
+
+

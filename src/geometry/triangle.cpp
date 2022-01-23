@@ -47,6 +47,31 @@ glm::vec3 Triangle::smooth_normal(glm::vec2 barycentric){
     return glm::normalize((n1 * u) + (n2 * v) + (n0 * (1 - u -v)));
 }
 
+glm::vec3 Triangle::tangent(glm::vec2 barycentric){
+
+    float u = barycentric.x;
+    float v = barycentric.y;
+
+    glm::vec3 t0 = this->mesh->tangents[this->mesh->face_indices[this->face_offset]];
+    glm::vec3 t1 = this->mesh->tangents[this->mesh->face_indices[this->face_offset + 1]];
+    glm::vec3 t2 = this->mesh->tangents[this->mesh->face_indices[this->face_offset + 2]];
+
+    return glm::normalize((t1 * u) + (t2 * v) + (t0 * (1 - u -v)));
+}
+
+glm::vec3 Triangle::bitangent(glm::vec2 barycentric){
+        float u = barycentric.x;
+        float v = barycentric.y;
+    
+        glm::vec3 b0 = this->mesh->bitangents[this->mesh->face_indices[this->face_offset]];
+        glm::vec3 b1 = this->mesh->bitangents[this->mesh->face_indices[this->face_offset + 1]];
+        glm::vec3 b2 = this->mesh->bitangents[this->mesh->face_indices[this->face_offset + 2]];
+    
+        return glm::normalize((b1 * u) + (b2 * v) + (b0 * (1 - u -v)));
+}
+
+   
+
 glm::vec3 Triangle::flat_normal(){
     glm::vec3 v0 = this->mesh->vertices[this->mesh->face_indices[this->face_offset]];
     glm::vec3 v1 = this->mesh->vertices[this->mesh->face_indices[this->face_offset + 1]];

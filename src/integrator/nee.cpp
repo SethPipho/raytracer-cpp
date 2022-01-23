@@ -10,15 +10,16 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
 
     bool specular_bounce = false;
 
-    for (int i = 0; i < 3; i++){
+    for (int i = 0; i < 2; i++){
         IntersectionData intersection = scene.bvh.nearestIntersection(scatter_ray);
         if (!intersection.hit){
+            radiance += throughput * glm::vec3(0.0f);
             break;  
         }
 
         if (intersection.triangle.mesh->is_light){
             if (i == 0){
-                return glm::vec3(15.f) * throughput;
+                return glm::vec3(20.f) * throughput;
             } else if (specular_bounce){
                 radiance += throughput * glm::vec3(15.f);
             } 
@@ -28,16 +29,16 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
         bool backface = false;
         
         glm::vec3 normal = intersection.triangle.smooth_normal(intersection.barycentric);
-        glm::vec2 tex_coord = intersection.triangle.tex_coords(intersection.barycentric);
-
-        
+     
         if (glm::dot(ray.direction, normal) >= 0.0f){
             normal *= -1.f;
             backface = true;
         }
         
         intersection.smooth_normal = normal;
-        intersection.tex_coord = tex_coord;
+        intersection.tex_coord = intersection.triangle.tex_coords(intersection.barycentric);
+        intersection.tangent = intersection.triangle.tangent(intersection.barycentric);
+        intersection.bitangent = intersection.triangle.bitangent(intersection.barycentric);
 
         //direct lighting
         Triangle& light = scene.pickLight(randuf());
@@ -55,21 +56,29 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
 
         BSDF* bsdf = intersection.triangle.mesh->bsdf;
 
+        
+
         if (bsdf->sample_light){
-            bool occluded = (scene.bvh.isOccluded(shadow_ray, light_dist - .0001f));
+
+              
             specular_bounce = false;
+            bool occluded = (scene.bvh.isOccluded(shadow_ray, light_dist - .0001f));
+            if (glm::dot(normal, to_light) < 0.f){
+                   to_light *= -1.f; ///TODO: this is a hack, I don't know why it's needed
+            }
 
             if (!occluded){
+             
                 float solid_angle = glm::dot(to_light, light_normal) / (light_dist * light_dist);
-                glm::vec3 bsdf_eval = bsdf->eval(-ray.direction, to_light, intersection);
-
-                //weird hacks fix later
-                if (glm::dot(to_light, normal) < 0.0f) bsdf_eval *= -1.f;
                 if (solid_angle < 0.f) solid_angle *= -1.f;
+              
+                
+                glm::vec3 bsdf_eval = bsdf->eval(-ray.direction, to_light, intersection);
+                bsdf_eval = glm::clamp(bsdf_eval, 0.f, 1.f);
             
 
                 float light_pdf = light_pos_pdf * light_pick_pdf;
-                glm::vec3 direct_lighting = glm::vec3(25.f) * bsdf_eval * solid_angle / light_pdf;
+                glm::vec3 direct_lighting = glm::vec3(20.f) * bsdf_eval * solid_angle / light_pdf;
                 radiance += throughput * direct_lighting;
             } 
 
@@ -86,8 +95,8 @@ glm::vec3 NeePathTracer::trace(Ray& ray, Scene& scene){
         scatter_ray = Ray(intersection.position, sample.direction);
     }
 
-    assert(radiance.x >= 0.f);
-    assert(radiance.y >= 0.f);
-    assert(radiance.z >= 0.f);
+    //assert(radiance.x >= 0.f);
+   // assert(radiance.y >= 0.f);
+    //assert(radiance.z >= 0.f);
     return radiance;
 }

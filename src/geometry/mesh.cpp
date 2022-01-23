@@ -4,12 +4,69 @@
 
 #include "geometry/mesh.h"
 
+#include <iostream>
+
+void Mesh::compute_tangents(){
+    tangents.resize(vertices.size());
+    bitangents.resize(vertices.size());
+    for (unsigned int i = 0; i < vertices.size(); i++){
+        tangents[i] = glm::vec3(0.0f);
+        bitangents[i] = glm::vec3(0.0f);
+    }
+    //http://foundationsofgameenginedev.com/FGED2-sample.pdf
+    for (unsigned int i = 0; i < face_indices.size(); i += 3) {
+        glm::vec3 p0 = vertices[face_indices[i]];
+        glm::vec3 p1 = vertices[face_indices[i+1]];
+        glm::vec3 p2 = vertices[face_indices[i+2]];
+        
+        glm::vec2 w0 = tex_coords[face_indices[i]];
+        glm::vec2 w1 = tex_coords[face_indices[i+1]];
+        glm::vec2 w2 = tex_coords[face_indices[i+2]];
+
+        glm::vec3 e1 = p1 - p0;
+        glm::vec3 e2 = p2 - p0;
+
+        float x1 = w1.x - w0.x;
+        float x2 = w2.x - w0.x;
+        float y1 = w1.y - w0.y;
+        float y2 = w2.y - w0.y;
+
+    
+        float r = 1.0f/(x1 * y2 - x2 * y1);
+        glm::vec3 tangent = (e1 * y2 - e2 * y1) * r;
+        glm::vec3 bitangent = (e2 * x1 - e1 * x2) * r;
+
+
+        tangents[face_indices[i]] += tangent;
+        tangents[face_indices[i+1]] += tangent;
+        tangents[face_indices[i+2]] += tangent;
+
+        bitangents[face_indices[i]] += bitangent;
+        bitangents[face_indices[i+1]] += bitangent;
+        bitangents[face_indices[i+2]] += bitangent;
+    }
+     for(int i = 0; i < vertices.size(); i++){
+        tangents[i] = glm::normalize(tangents[i]);
+        bitangents[i] = glm::normalize(bitangents[i]);
+
+        if (glm::dot(glm::cross(tangents[i], bitangents[i]), normals[i]) < 0.0f) {
+           // bitangents[i] = -bitangents[i];
+            
+        }
+     
+       
+     }
+   
+}
+
 
 void Mesh::applyTransform(glm::mat4 transform){
     glm::mat4 transform_normal = glm::inverse(glm::transpose(transform));
     for(int i = 0; i < vertices.size(); i++){
         this->vertices[i] = transform * glm::vec4(this->vertices[i], 1.0);
-        this->normals[i] = transform_normal * glm::vec4(this->normals[i], 1.0);
+        this->tangents[i] = glm::normalize(transform * glm::vec4(this->tangents[i], 0.0));
+        this->bitangents[i] = glm::normalize(transform_normal * glm::vec4(this->bitangents[i], 0.0));
+        this->normals[i] = glm::normalize(transform_normal * glm::vec4(this->normals[i], 0.0));
     }
 }
 
@@ -72,5 +129,6 @@ Mesh Mesh::loadObj(std::string filename){
             index_offset += fv;
         }
     }
+    mesh.compute_tangents();
     return mesh;
 }

@@ -5,7 +5,7 @@
 #include <thread>
 #include <chrono>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 #include "argparse/argparse.hpp"
 
@@ -14,7 +14,6 @@
 #include "core/render.h"
 #include "integrator/integrator.h"
 #include "util/progress_bar.h"
-
 
 
 int main(int argc, char** argv){
@@ -51,13 +50,13 @@ int main(int argc, char** argv){
     std::cout << config.tile_size << "x" <<  config.tile_size << " tiles" << std::endl;
     std::cout << config.num_threads << " threads available" << std::endl;
   
+    //Scene scene = Scene::load_gltf(config.scene_file);
    
-    Scene scene = Scene::load_file(config.scene_file);
-    scene.camera.aspect_ratio = float(config.width)/float(config.height);
-
-   
-  
     
+    Scene scene = Scene::load_file(config.scene_file);
+    
+
+    scene.camera.aspect_ratio = float(config.width)/float(config.height);
     scene.build();
 
     std::cout <<"# Tris: "<< scene.triangles.size() << std::endl;
@@ -106,4 +105,5 @@ int main(int argc, char** argv){
     
 
     return 0;
+    
 }

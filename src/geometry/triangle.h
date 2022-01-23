@@ -24,6 +24,8 @@ class Triangle{
         glm::vec3 centroid();
         glm::vec3 flat_normal();
         glm::vec3 smooth_normal(glm::vec2 barycentric);
+        glm::vec3 tangent(glm::vec2 barycentric);
+        glm::vec3 bitangent(glm::vec2 barycentric);
         glm::vec2 tex_coords(glm::vec2 barycentric);
         glm::vec3 sample_point(float r1, float r2);    
         float area();

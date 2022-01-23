@@ -31,6 +31,8 @@ struct IntersectionData {
 
     glm::vec3 face_normal;
     glm::vec3 smooth_normal;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
     glm::vec2 tex_coord;
 };
 
