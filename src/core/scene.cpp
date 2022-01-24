@@ -8,7 +8,7 @@
 #include "json/json_fwd.hpp"
 
 #include "core/scene.h"
-#include "materials/bsdf.h"
+#include "materials/material.h"
 #include "materials/texture.h"
 #include "assets/gtlf_loader.h"
 
@@ -53,21 +53,30 @@ Scene Scene::load_file(std::string filepath){
     json camera_config = config["camera"];
     scene.camera = Camera::from_json(camera_config);
 
-
-    std::unordered_map<std::string, BSDF*> material_map;
+    
+    std::unordered_map<std::string, Material*> material_map;
     for (auto mat_config: config["materials"]){
         std::string name = mat_config["name"];
         std::string type = mat_config["type"];
-        
-        LambertianBSDF* material = new LambertianBSDF();
 
-        if (mat_config.contains("albedo_texture")){
-             std::string tex_path = dir + "/" + (std::string)mat_config["albedo_texture"];
-             material->albedo_texture = TextureMap::load_file(tex_path);
+
+        if (type == "diffuse"){
+            DiffuseMaterial* material = new DiffuseMaterial();
+            if (mat_config.contains("albedo_texture")){
+                std::string tex_path = dir + "/" + (std::string)mat_config["albedo_texture"];
+                material->albedo_texture = TextureMap::load_file(tex_path);
+            }
+            material_map[name] = material;
+        } else if (type == "reflection") {
+            ReflectionMaterial* material = new ReflectionMaterial();
+            if (mat_config.contains("albedo_texture")){
+                std::string tex_path = dir + "/" + (std::string)mat_config["albedo_texture"];
+                material->albedo_texture = TextureMap::load_file(tex_path);
+            }
+            material_map[name] = material;
         }
-        material_map[name] = material;
     }
-
+    
     for (auto object: config["objects"]){
         std::string mesh_path = dir + "/" + (std::string) object["path"];
         
@@ -94,12 +103,14 @@ Scene Scene::load_file(std::string filepath){
             mesh.applyTransform(transform);
 
             //default material
-            mesh.bsdf = new LambertianBSDF();
-            mesh.bsdf->albedo = glm::vec3(1.0f);
+            DiffuseMaterial* material = new DiffuseMaterial();
+            material->albedo = glm::vec3(0.8f);
+            mesh.material = material;
+            
 
             if (object.contains("material_ref")){
                 std::string material_name = object["material_ref"];
-                mesh.bsdf = material_map[material_name];
+                mesh.material = material_map[material_name];
             }
         
             if (object.count("light") > 0){

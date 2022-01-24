@@ -1,6 +1,6 @@
 #include <iostream>
 #include "assets/gtlf_loader.h"
-#include "materials/bsdf.h"
+#include "materials/material.h"
 #include "materials/texture.h"
 
 TextureMap* load_gltf_image(tinygltf::Image &gltf_image, bool convert_linear){
@@ -68,13 +68,13 @@ std::vector<Mesh> load_gltf(std::string filepath){
                 << model.lights.size()   << " lights\n";
     */
 
-    auto materials = std::vector<BSDF*>();
+    auto materials = std::vector<Material*>();
 
     for (const auto gltf_material: model.materials){
 
-        auto material = new LambertianBSDF();
-        material->albedo = glm::vec3(0.0, 0.0, 0.0);
-        
+        auto material = new DiffuseMaterial();
+        material->albedo = glm::vec3(0.8f);
+      
         auto &pbr_metallic_roughness = gltf_material.pbrMetallicRoughness;
         auto &base_color_texture_info = pbr_metallic_roughness.baseColorTexture;
 
@@ -104,7 +104,7 @@ std::vector<Mesh> load_gltf(std::string filepath){
 
             Mesh mesh;
 
-            mesh.bsdf = materials[meshPrimitive.material];
+            mesh.material = materials[meshPrimitive.material];
             
             //mesh indices
             const auto &indicesAccessor = model.accessors[meshPrimitive.indices];

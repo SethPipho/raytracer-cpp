@@ -1,6 +1,8 @@
 obj/
 bin/
 
+output.png
+
 .vs/
 .vscode/
 

@@ -9,7 +9,7 @@
 #include "core/scene.h"
 #include "geometry/geometry.h"
 #include "util/math.h"
-#include "materials/bsdf.h"
+#include "materials/material.h"
 
 class Integrator {
     public:

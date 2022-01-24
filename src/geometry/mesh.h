@@ -6,13 +6,12 @@
 
 #include "glm/glm.hpp"
 
-class BSDF;
+class Material;
 
 
 class Mesh {
     public:
-        //temp until material class
-        BSDF* bsdf;
+        Material* material;
         bool is_light = false;
        
         std::vector<glm::vec3> vertices;
