@@ -61,21 +61,27 @@ OBJECTS :=
 
 GENERATED += $(OBJDIR)/bbox.o
 GENERATED += $(OBJDIR)/bvh.o
+GENERATED += $(OBJDIR)/diffuse.o
+GENERATED += $(OBJDIR)/emission.o
 GENERATED += $(OBJDIR)/gltf_loader.o
 GENERATED += $(OBJDIR)/lib.o
 GENERATED += $(OBJDIR)/main.o
 GENERATED += $(OBJDIR)/mesh.o
 GENERATED += $(OBJDIR)/nee.o
+GENERATED += $(OBJDIR)/reflection.o
 GENERATED += $(OBJDIR)/scene.o
 GENERATED += $(OBJDIR)/textures.o
 GENERATED += $(OBJDIR)/triangle.o
 OBJECTS += $(OBJDIR)/bbox.o
 OBJECTS += $(OBJDIR)/bvh.o
+OBJECTS += $(OBJDIR)/diffuse.o
+OBJECTS += $(OBJDIR)/emission.o
 OBJECTS += $(OBJDIR)/gltf_loader.o
 OBJECTS += $(OBJDIR)/lib.o
 OBJECTS += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/mesh.o
 OBJECTS += $(OBJDIR)/nee.o
+OBJECTS += $(OBJDIR)/reflection.o
 OBJECTS += $(OBJDIR)/scene.o
 OBJECTS += $(OBJDIR)/textures.o
 OBJECTS += $(OBJDIR)/triangle.o
@@ -169,7 +175,16 @@ $(OBJDIR)/lib.o: src/lib.cpp
 $(OBJDIR)/main.o: src/main.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/textures.o: src/materials/textures.cpp
+$(OBJDIR)/diffuse.o: src/shading/materials/diffuse.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/emission.o: src/shading/materials/emission.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/reflection.o: src/shading/materials/reflection.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/textures.o: src/shading/textures.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

@@ -45,7 +45,7 @@ void render_tiled_worker(Integrator& integrator, Scene& scene, RenderConfig conf
                     float aa_y = randuf() / (float) config.height;
 
                     Ray camera_ray = scene.camera.generateRay(u + aa_x,v + aa_y); 
-                    accumulator[index] += glm::clamp(integrator.trace(camera_ray, scene), 0.f, 20.f);
+                    accumulator[index] += integrator.trace(camera_ray, scene);
                 }
             }
         }        

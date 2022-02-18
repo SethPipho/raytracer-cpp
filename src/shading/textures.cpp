@@ -1,9 +1,7 @@
 
 
 #include "stb/stb_image.h"
-
-
-#include "materials/texture.h"
+#include "shading/texture.h"
 
 glm::vec3 TextureMap::sample(glm::vec2 uv){
     int x = uv.x * w;

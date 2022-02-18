@@ -88,7 +88,7 @@ Mesh Mesh::loadObj(std::string filename){
 
      std::map<tinyobj::index_t, int,decltype(compare_idx)> unique_vertices(compare_idx);
 
-
+    bool has_tex_coords = attrib.texcoords.size() > 0;
     int current_idx = 0;
      // copy face indices
     for (size_t s = 0; s < shapes.size(); s++) {
@@ -114,8 +114,16 @@ Mesh Mesh::loadObj(std::string filename){
                     tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
                     tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
                     tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
-                    tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
-                    tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
+
+                    tinyobj::real_t tx, ty;
+                    if (has_tex_coords){
+                        tx = attrib.texcoords[2*idx.texcoord_index+0];
+                        ty = attrib.texcoords[2*idx.texcoord_index+1];
+                    } else {
+                        tx = 0.0f;
+                        ty = 0.0f;
+                    }
+                 
 
                     mesh.face_indices.push_back(current_idx);
                     mesh.vertices.push_back(glm::vec3(vx, vy, vz));

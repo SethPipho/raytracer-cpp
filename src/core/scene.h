@@ -17,6 +17,19 @@
 
 using json = nlohmann::json;
 
+
+struct LightSample {
+    Triangle light;
+    glm::vec2 barycentric;
+    glm::vec3 position;
+    glm::vec3 normal;
+    float distance;
+    glm::vec3 direction;
+    float pdf;
+
+    LightSample(){};
+};
+
 class Scene {
     public:
         std::vector<Mesh> meshes;
@@ -29,13 +42,8 @@ class Scene {
         void build();
         void addMesh(Mesh& mesh);
         Triangle& pickLight(float r);
+        LightSample sampleLight(IntersectionData& intersection);
         IntersectionData nearestIntersection(Ray& r);
         static Scene load_file(std::string filepath);
 };
-
-
-
-
-
-
 #endif

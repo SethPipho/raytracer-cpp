@@ -12,16 +12,12 @@ glm::vec3 Triangle::centroid(){
     return glm::vec3(x,y,z);
 };
 
-glm::vec3 Triangle::sample_point(float r1, float r2){
+glm::vec3 Triangle::position(glm::vec2 barycentric){
     glm::vec3 v0 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset));
     glm::vec3 v1 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset + 1));
     glm::vec3 v2 = this->mesh->vertices.at(this->mesh->face_indices.at(this->face_offset + 2));
 
-    if (r1 + r2 > 1.f) {
-        r1 = 1.f - r1;
-        r2 = 1.f - r2;
-    };
-    return v0 + r1 * (v1 - v0) + r2 * (v2 - v0); 
+    return v0 + barycentric.x * (v1 - v0) + barycentric.y * (v2 - v0); 
 };
 
 float Triangle::area(){
@@ -35,7 +31,7 @@ float Triangle::area(){
     return glm::length(n)/2.f;
 };
 
-glm::vec3 Triangle::smooth_normal(glm::vec2 barycentric){
+glm::vec3 Triangle::normal(glm::vec2 barycentric){
 
     float u = barycentric.x;
     float v = barycentric.y;

@@ -1,20 +1,21 @@
-- organize souce files
-    - geometry folder, meterials folder
-
-- material implementation
-    - eval, sample, pdf
-
 - BVH
     - store nodes in vector
     - front to back traversal
 
 - Scenes
-    - fix mesh loading 
-    - assimp?
+    - parse json material better (i.e. factory)
 
-- misc
-    - BBox::union
-    - Triangle.rayIntersection
-    - BBox.rayIntersection
-    - Triangle.getVertices
+- Lights
+    - Emission material?
 
+- Materials
+    - refraction
+    - fresnel graph
+    - ONB? (bsdf local coordinates only?)
+    - Microfacet (gltf support)
+
+- Geometery
+    - primitive interface (if want to do hair strands)
+
+- Misc
+    - good demo scene

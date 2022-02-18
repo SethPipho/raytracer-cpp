@@ -1,7 +1,7 @@
 #include <iostream>
 #include "assets/gtlf_loader.h"
-#include "materials/material.h"
-#include "materials/texture.h"
+#include "shading/materials/all.h"
+#include "shading/texture.h"
 
 TextureMap* load_gltf_image(tinygltf::Image &gltf_image, bool convert_linear){
     TextureMap* texture_map = new TextureMap();

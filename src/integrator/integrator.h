@@ -9,7 +9,9 @@
 #include "core/scene.h"
 #include "geometry/geometry.h"
 #include "util/math.h"
-#include "materials/material.h"
+#include "shading/material.h"
+#include "shading/materials/all.h"
+
 
 class Integrator {
     public:
@@ -43,7 +45,7 @@ glm::vec3 BruteForcePathTracer::trace(Ray& ray, Scene& scene){
             return glm::vec3(15.f) * throughput;
         }
 
-        glm::vec3 normal = intersection.triangle.smooth_normal(intersection.barycentric);
+        glm::vec3 normal = intersection.trianglenormal(intersection.barycentric);
         if (intersection.backface){
             normal *= -1.f;
         }

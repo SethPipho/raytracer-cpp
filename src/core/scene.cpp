@@ -8,8 +8,9 @@
 #include "json/json_fwd.hpp"
 
 #include "core/scene.h"
-#include "materials/material.h"
-#include "materials/texture.h"
+#include "shading/material.h"
+#include "shading/texture.h"
+#include "shading/materials/all.h"
 #include "assets/gtlf_loader.h"
 
 void Scene::build(){
@@ -22,9 +23,31 @@ void Scene::build(){
     bvh.build();
 }
 
-Triangle& Scene::pickLight(float r){
-    int index = r * this->lights.size();
-    return this->lights.at(index);
+
+LightSample Scene::sampleLight(IntersectionData& intersection){
+    LightSample sample;
+
+    int index = randuf() * this->lights.size();
+    Triangle light = this->lights.at(index);
+
+    float u = randuf();
+    float v = randuf();
+    if (u + v > 1.f) {
+        u = 1.f - u;
+        v = 1.f - v;
+    };
+    glm::vec2 barycentric = glm::vec2(u,v);
+    glm::vec3 position = light.position(barycentric);
+
+    sample.light = light;
+    sample.barycentric = barycentric;
+    sample.position = position;
+    sample.distance = glm::length(position - intersection.position);
+    sample.direction = glm::normalize(position - intersection.position);
+    sample.normal = light.normal(barycentric);
+    sample.pdf = 1.0f / (this->lights.size() * light.area());
+
+    return sample;
 }
 
 void Scene::addMesh(Mesh& mesh){
@@ -74,6 +97,15 @@ Scene Scene::load_file(std::string filepath){
                 material->albedo_texture = TextureMap::load_file(tex_path);
             }
             material_map[name] = material;
+        } else if (type == "emission") {
+            EmissionMaterial* material = new EmissionMaterial();
+            if (mat_config.contains("emission_color")){
+                material->emission = vector_to_vec3(mat_config["emission_color"]);
+            } 
+            if (mat_config.contains("emission_strength")){
+                material->emission *= mat_config["emission_strength"].get<float>();
+            }
+            material_map[name] = material;
         }
     }
     
@@ -108,11 +140,12 @@ Scene Scene::load_file(std::string filepath){
             mesh.material = material;
             
 
-            if (object.contains("material_ref")){
+            if (object.contains("material_ref")) {
                 std::string material_name = object["material_ref"];
                 mesh.material = material_map[material_name];
+                mesh.is_light = mesh.material->emmissive;
             }
-        
+            
             if (object.count("light") > 0){
                 mesh.is_light = object["light"].get<bool>();
             } 
